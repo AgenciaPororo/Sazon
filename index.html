@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sazón Casero - Haute Cuisine & Delivery</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Header Sobrio y Exclusivo -->
+    <header class="header">
+        <button class="config-btn" onclick="openConfigModal()" aria-label="Configuración Admin">
+            <i class="fa-solid fa-sliders"></i>
+        </button>
+
+        <h1 class="brand-name">SAZÓN CASERO</h1>
+        <div class="menu-divider"></div>
+        <h2 class="sub-title">Restaurante · Comida. Platos de Autor</h2>
+        <p class="slogan">« Viví una experiencia distinta en Sazón »</p>
+        
+        <div class="header-tags">
+            <span class="plain-tag"><i class="fa-solid fa-utensils"></i> Menú Ejecutivo</span>
+            <span class="plain-tag"><i class="fa-solid fa-truck"></i> Envíos a Domicilio</span>
+        </div>
+
+        <div class="local-info">
+            <p class="address-text">Dante Alighieri & 1ro de Mayo · Casilda</p>
+            <div class="contact-links">
+                <a href="https://wa.me/543464625383" target="_blank" class="contact-btn" title="WhatsApp">
+                    <i class="fa-brands fa-whatsapp"></i>
+                </a>
+                <a href="https://www.instagram.com/sazoncasero___" target="_blank" class="contact-btn" title="Instagram">
+                    <i class="fa-brands fa-instagram"></i>
+                </a>
+                <button class="contact-btn" onclick="openHorariosModal()" title="Horarios de Atención">
+                    <i class="fa-regular fa-clock"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Banner Estado de Comercio General -->
+    <div id="store-status-banner" class="store-status-banner" style="display: none;">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span>Actualmente nos encontramos fuera de horario de atención. Se pueden visualizar los productos pero los pedidos están deshabilitados.</span>
+    </div>
+
+    <!-- Banner Menú Diario -->
+    <section class="menu-diario-banner">
+        <div class="banner-content">
+            <button onclick="openMenuDiarioModal()" class="btn-consulta">
+                <i class="fa-solid fa-bell-concierge"></i> Consultar Menú del Día
+            </button>
+        </div>
+        
+        <!-- Cartel Dinámico de Alerta de Horario debajo del botón -->
+        <div id="closing-soon-banner" class="status-alert-banner alert-warning" style="display: none;">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>¡Atención! El local está pronto a cerrar. Realizá tu pedido a la brevedad.</span>
+        </div>
+        
+        <div id="closed-status-banner" class="status-alert-banner alert-danger" style="display: none;">
+            <i class="fa-solid fa-circle-xmark"></i>
+            <span>El local se encuentra cerrado actualmente. Consultá los horarios de atención.</span>
+        </div>
+    </section>
+
+    <!-- Contenedor Principal -->
+    <div class="container menu-board">
+        <!-- Navegación por Categorías -->
+        <nav class="category-nav-wrapper">
+            <div class="category-pills" id="category-pills">
+                <!-- Carga dinámica -->
+            </div>
+        </nav>
+
+        <!-- Catálogo de Productos -->
+        <main class="menu-grid" id="menu-container">
+            <!-- Carga dinámica por JS -->
+        </main>
+    </div>
+
+    <!-- Botón Flotante de Carrito (Ahora Ubicado Arriba a la Derecha) -->
+    <button class="floating-cart-btn" id="floating-cart-btn" onclick="toggleCart()" aria-label="Ver Carrito">
+        <i class="fa-solid fa-utensils"></i>
+        <span class="cart-badge" id="cart-count">0</span>
+    </button>
+
+    <!-- Toast de Notificación -->
+    <div id="toast-notification" class="toast-notification"></div>
+
+    <!-- Modal Horarios -->
+    <div class="custom-modal" id="horarios-modal">
+        <div class="custom-modal-box">
+            <div class="modal-icon-header">
+                <i class="fa-regular fa-clock"></i>
+            </div>
+            <h3>Horarios de Atención</h3>
+            <div class="horarios-list">
+                <p><strong>Lunes a Viernes:</strong><br>10:00 hs a 15:00 hs<br>19:00 hs a 01:00 hs</p>
+                <div style="height: 1px; background: var(--border-subtle); margin: 12px 0;"></div>
+                <p><strong>Sábados y Domingos:</strong><br>18:30 hs a 01:30 hs</p>
+            </div>
+            <div class="modal-actions" style="margin-top: 20px;">
+                <button class="btn-secondary" onclick="closeHorariosModal()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmación Eliminar Producto -->
+    <div class="custom-modal high-priority-modal" id="confirm-delete-modal">
+        <div class="custom-modal-box">
+            <div class="modal-icon-header" style="color: #f87171;">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3>¿Eliminar Producto?</h3>
+            <p id="delete-modal-msg">¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer.</p>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeDeleteConfirmModal()">Cancelar</button>
+                <button class="btn-primary" style="background: #ef4444; border-color: #ef4444; color: #fff;" onclick="executeProductDeletion()">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmación Salir Sin Guardar -->
+    <div class="custom-modal high-priority-modal" id="unsaved-changes-modal">
+        <div class="custom-modal-box">
+            <div class="modal-icon-header" style="color: #facc15;">
+                <i class="fa-solid fa-floppy-disk"></i>
+            </div>
+            <h3>Cambios no Guardados</h3>
+            <p>Tenés cambios realizados sin guardar. ¿Deseás guardar los cambios antes de salir o descartarlos?</p>
+            <div class="modal-actions" style="flex-direction: column; gap: 8px;">
+                <button class="btn-primary" onclick="saveAndCloseAdminPanel()">Guardar y Salir</button>
+                <button class="btn-secondary" onclick="discardAndCloseAdminPanel()">Salir sin Guardar</button>
+                <button class="btn-secondary" style="border: none; opacity: 0.7;" onclick="cancelCloseAdminPanel()">Continuar Editando</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Autenticación Admin -->
+    <div class="custom-modal" id="config-auth-modal">
+        <div class="custom-modal-box">
+            <div class="modal-icon-header">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h3>Acceso Privado</h3>
+            <p>Ingrese la clave de administración</p>
+            <div class="form-group password-wrapper">
+                <input type="password" id="admin-pass-input" placeholder="Contraseña">
+                <button type="button" class="toggle-pass-btn" onclick="togglePasswordVisibility()" aria-label="Ver u ocultar contraseña">
+                    <i class="fa-solid fa-eye" id="pass-eye-icon"></i>
+                </button>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeConfigAuthModal()">Cancelar</button>
+                <button class="btn-primary" onclick="verifyAdminPass()">Ingresar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Selector Módulos Admin -->
+    <div class="custom-modal" id="admin-menu-selector-modal">
+        <div class="custom-modal-box">
+            <div class="modal-icon-header">
+                <i class="fa-solid fa-sliders"></i>
+            </div>
+            <h3>Panel de Control</h3>
+            <p>Seleccione la sección a gestionar:</p>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
+                <button class="btn-primary-option" onclick="openAdminProductsPanel()">
+                    <i class="fa-solid fa-boxes-stacked"></i> Catálogo de Productos
+                </button>
+                <button class="btn-primary-option" onclick="openAdminMenuDiarioPanel()">
+                    <i class="fa-solid fa-utensils"></i> Menú del Día
+                </button>
+            </div>
+            <button class="btn-secondary" onclick="closeAdminSelectorModal()">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- Modal Panel Edición Menú del Día -->
+    <div class="custom-modal" id="admin-menu-diario-modal">
+        <div class="custom-modal-box">
+            <div class="admin-header">
+                <h3>Editar Menú del Día</h3>
+                <button class="close-btn" onclick="closeAdminMenuDiarioModal()">×</button>
+            </div>
+            <div class="form-group">
+                <label>Propuesta Gastronómica (Título):</label>
+                <textarea id="admin-menu-text" rows="3" placeholder="Ej: Pechuga rellena sobre salsa de azafrán con papas bastón"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Precio / Costo ($):</label>
+                <input type="number" id="admin-menu-price" placeholder="Ej: 12500">
+            </div>
+            <div class="form-group">
+                <label>Fotografía (Opcional):</label>
+                <input type="file" id="admin-menu-image-file" accept="image/*" onchange="previewAdminMenuImage(event)">
+                <div id="admin-menu-img-preview-box" style="margin-top: 10px; display: none;">
+                    <img id="admin-menu-img-preview" src="" alt="Vista previa" style="max-width: 100%; max-height: 160px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+                </div>
+            </div>
+            <div class="modal-actions" style="margin-top: 15px;">
+                <button class="btn-secondary" onclick="closeAdminMenuDiarioModal()">Cancelar</button>
+                <button class="btn-primary" onclick="saveAdminMenuDiario()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Público: Menú del Día -->
+    <div class="custom-modal" id="public-menu-diario-modal">
+        <div class="custom-modal-box menu-diario-modal-box">
+            <div class="admin-header">
+                <h3>Sugerencia del Chef</h3>
+                <button class="close-btn" onclick="closeMenuDiarioModal()">×</button>
+            </div>
+            
+            <div id="public-menu-img-container" style="display: none; margin-bottom: 16px; text-align: center;">
+                <img id="public-menu-img" src="" alt="Menú del Día" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+            </div>
+
+            <div class="menu-diario-single-box" style="background: var(--bg-surface); padding: 16px; border-radius: var(--radius-sm); text-align: left; margin-bottom: 16px; border: 1px solid var(--border-subtle);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.68rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-secondary);">Propuesta de Hoy</span>
+                    <span id="public-menu-price" class="menu-price-badge" style="display: none;"></span>
+                </div>
+                <p id="public-menu-text" style="font-family: var(--font-serif); font-size: 1.25rem; color: #ffffff; margin-top: 6px; line-height: 1.3;"></p>
+            </div>
+
+            <div class="public-menu-form">
+                <div class="checkout-option">
+                    <label>Modalidad de Entrega:</label>
+                    <div class="radio-group">
+                        <label class="radio-card"><input type="radio" name="md-delivery-type" value="retiro" checked onchange="updateMdCheckoutFields()"> Retiro en Local</label>
+                        <label class="radio-card"><input type="radio" name="md-delivery-type" value="delivery" onchange="updateMdCheckoutFields()"> Delivery (+$2.500)</label>
+                    </div>
+                </div>
+
+                <div class="form-group" id="md-address-group" style="display: none;">
+                    <label>Domicilio:</label>
+                    <input type="text" id="md-client-address" placeholder="Ej: Dante Alighieri 1234">
+                </div>
+
+                <div class="checkout-option">
+                    <label>Método de Pago:</label>
+                    <select id="md-payment-method" onchange="updateMdCheckoutFields()">
+                        <option value="Efectivo">Efectivo</option>
+                        <option value="Transferencia">Transferencia Bancaria</option>
+                    </select>
+                </div>
+
+                <div class="transfer-info-box" id="md-transfer-info" style="display: none;">
+                    <p><strong>Datos para la Transferencia:</strong></p>
+                    <p>CBU: 0000003100012345678901</p>
+                    <p>Alias: SAZON.CASERO.CASILDA</p>
+                    <p>Banco: Banco Macro</p>
+                </div>
+
+                <div class="form-group" id="md-cash-change-group" style="display: none;">
+                    <label>Paga con:</label>
+                    <input type="text" id="md-cash-amount" placeholder="Monto para cambio (ej: $20.000)">
+                </div>
+
+                <div class="form-group">
+                    <label>Tu Nombre:</label>
+                    <input type="text" id="md-client-name" placeholder="Nombre y Apellido">
+                </div>
+                <div class="form-group">
+                    <label>Notas para Cocina:</label>
+                    <textarea id="md-client-notes" placeholder="Preferencias o aclaraciones" rows="2"></textarea>
+                </div>
+
+                <button class="btn-whatsapp" id="md-submit-btn" onclick="sendWhatsAppMenuDiarioOrder()">
+                    <i class="fa-brands fa-whatsapp"></i> Pedir por WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Panel de Configuración de Productos -->
+    <div class="custom-modal" id="admin-panel-modal">
+        <div class="custom-modal-box admin-modal-box">
+            <div class="admin-header">
+                <h3>Catálogo de Productos</h3>
+                <button class="close-btn" onclick="requestCloseAdminPanel()">×</button>
+            </div>
+            
+            <div class="admin-top-controls">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="admin-search-input" placeholder="Buscar producto..." oninput="filterAdminProducts()">
+                </div>
+                <button class="btn-primary-option" style="width: auto; padding: 0 16px;" onclick="openAddProductModal()"><i class="fa-solid fa-plus"></i> Nuevo</button>
+            </div>
+
+            <div class="admin-products-list" id="admin-products-list">
+                <!-- Lista dinámica -->
+            </div>
+            <div class="modal-actions" style="margin-top: 16px;">
+                <button class="btn-secondary" onclick="requestCloseAdminPanel()">Cerrar / Salir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Agregar Nuevo Producto -->
+    <div class="custom-modal" id="add-product-modal">
+        <div class="custom-modal-box">
+            <h3>Agregar Producto</h3>
+            <div class="form-group">
+                <label>Categoría:</label>
+                <select id="new-prod-category" onchange="toggleCategoryPriceFields()">
+                    <option value="entradas">Entradas</option>
+                    <option value="principales">Principales</option>
+                    <option value="pizzanesas">Pizzanesas</option>
+                    <option value="burgers">Burgers</option>
+                    <option value="lomitos">Lomitos</option>
+                    <option value="familiares">Familiares</option>
+                    <option value="pastas">Pastas</option>
+                    <option value="salsas">Salsas</option>
+                    <option value="pizzas">Pizzas</option>
+                    <option value="papas">Papas</option>
+                    <option value="postres">Postres</option>
+                    <option value="bebidas">Bebidas</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Nombre del plato:</label>
+                <input type="text" id="new-prod-name" placeholder="Ej: Burger Doble Cheddar">
+            </div>
+
+            <div class="form-group">
+                <label>Detalle / Ingredientes (Amplio):</label>
+                <textarea id="new-prod-detail" class="large-admin-textarea" rows="4" placeholder="Escribí aquí todos los ingredientes o descripción detallada del plato..."></textarea>
+            </div>
+            
+            <div class="form-group" id="standard-price-group">
+                <label>Precio ($):</label>
+                <input type="number" id="new-prod-price" placeholder="Monto">
+            </div>
+
+            <div id="multi-price-group" style="display: none;">
+                <div class="form-group">
+                    <label>Precio Opción Chica ($):</label>
+                    <input type="number" id="new-prod-price-small" placeholder="Monto">
+                </div>
+                <div class="form-group">
+                    <label>Precio Opción Grande ($):</label>
+                    <input type="number" id="new-prod-price-large" placeholder="Monto">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Etiquetas dietarias:</label>
+                <div style="display: flex; gap: 16px; margin-top: 6px;">
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; text-transform: none;">
+                        <input type="checkbox" id="new-prod-veggie"> Veggie <i class="fa-solid fa-leaf" style="color: #4ade80;"></i>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; text-transform: none;">
+                        <input type="checkbox" id="new-prod-sintacc"> Sin TACC 
+                        <span class="dietary-icon sintacc-badge" title="Sin TACC">
+                            <i class="fa-solid fa-wheat-awn"></i>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeAddProductModal()">Cancelar</button>
+                <button class="btn-primary" onclick="saveNewProduct()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Carrito de Compras -->
+    <div class="cart-modal" id="cart-modal">
+        <div class="cart-backdrop" onclick="toggleCart()"></div>
+        <div class="cart-content">
+            <div class="cart-header">
+                <h2>Su Pedido</h2>
+                <button class="close-btn" onclick="toggleCart()">×</button>
+            </div>
+            
+            <div class="cart-body" id="cart-items">
+                <!-- Carga JS -->
+            </div>
+
+            <div class="cart-footer">
+                <div class="checkout-option">
+                    <label>Modalidad de Entrega:</label>
+                    <div class="radio-group">
+                        <label class="radio-card"><input type="radio" name="delivery-type" value="retiro" checked onchange="updateCartTotal()"> Retiro en Local</label>
+                        <label class="radio-card"><input type="radio" name="delivery-type" value="delivery" onchange="updateCartTotal()"> Delivery (+$2.500)</label>
+                    </div>
+                </div>
+
+                <div class="form-group" id="address-group" style="display: none;">
+                    <input type="text" id="client-address" placeholder="Domicilio completo">
+                </div>
+
+                <div class="checkout-option">
+                    <label>Método de Pago:</label>
+                    <select id="payment-method" onchange="togglePaymentInfo()">
+                        <option value="Efectivo">Efectivo</option>
+                        <option value="Transferencia">Transferencia Bancaria</option>
+                    </select>
+                </div>
+
+                <div class="transfer-info-box" id="transfer-info" style="display: none;">
+                    <p><strong>Datos para la Transferencia:</strong></p>
+                    <p>CBU: 0000003100012345678901</p>
+                    <p>Alias: SAZON.CASERO.CASILDA</p>
+                    <p>Banco: Banco Macro</p>
+                </div>
+
+                <div class="form-group" id="cash-change-group" style="display: none;">
+                    <input type="text" id="cash-amount" placeholder="¿Con cuánto abona?">
+                </div>
+
+                <div class="form-group">
+                    <input type="text" id="client-name" placeholder="Nombre y Apellido">
+                </div>
+                <div class="form-group">
+                    <textarea id="client-notes" placeholder="Notas adicionales para la cocina" rows="2"></textarea>
+                </div>
+
+                <div class="summary-box">
+                    <div class="summary-line" id="subtotal-line" style="display: none; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px;">
+                        <span>Subtotal</span>
+                        <span id="cart-subtotal">$0</span>
+                    </div>
+                    <div class="summary-line" id="delivery-line" style="display: none; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 6px;">
+                        <span>Costo de envío</span>
+                        <span>$2.500</span>
+                    </div>
+                    <div class="summary-line total">
+                        <span>Total</span>
+                        <span id="cart-total">$0</span>
+                    </div>
+                </div>
+
+                <button class="btn-whatsapp" id="cart-submit-btn" onclick="sendWhatsAppOrder()">
+                    <i class="fa-brands fa-whatsapp"></i> Confirmar por WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Copyright -->
+    <footer class="site-footer">
+        <p>Creado por Pororó 🍿 - 2026</p>
+    </footer>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
