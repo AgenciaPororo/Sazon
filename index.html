@@ -83,7 +83,7 @@
         </main>
     </div>
 
-    <!-- Botón Flotante de Carrito (Ahora Ubicado Arriba a la Derecha) -->
+    <!-- Botón Flotante de Carrito -->
     <button class="floating-cart-btn" id="floating-cart-btn" onclick="toggleCart()" aria-label="Ver Carrito">
         <i class="fa-solid fa-utensils"></i>
         <span class="cart-badge" id="cart-count">0</span>
@@ -170,13 +170,22 @@
             </div>
             <h3>Panel de Control</h3>
             <p>Seleccione la sección a gestionar:</p>
-            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
                 <button class="btn-primary-option" onclick="openAdminProductsPanel()">
                     <i class="fa-solid fa-boxes-stacked"></i> Catálogo de Productos
                 </button>
                 <button class="btn-primary-option" onclick="openAdminMenuDiarioPanel()">
                     <i class="fa-solid fa-utensils"></i> Menú del Día
                 </button>
+                <div class="delivery-config-card">
+                    <label style="font-size: 0.75rem; letter-spacing: 1px; text-transform: uppercase; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px;">
+                        <i class="fa-solid fa-truck"></i> Delivery:
+                    </label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="number" id="admin-delivery-cost-input" placeholder="Costo ($)" style="text-align: center; font-weight: 600;">
+                        <button class="btn-save-delivery" onclick="saveAdminDeliveryCost()">Guardar</button>
+                    </div>
+                </div>
             </div>
             <button class="btn-secondary" onclick="closeAdminSelectorModal()">Cerrar</button>
         </div>
@@ -236,7 +245,7 @@
                     <label>Modalidad de Entrega:</label>
                     <div class="radio-group">
                         <label class="radio-card"><input type="radio" name="md-delivery-type" value="retiro" checked onchange="updateMdCheckoutFields()"> Retiro en Local</label>
-                        <label class="radio-card"><input type="radio" name="md-delivery-type" value="delivery" onchange="updateMdCheckoutFields()"> Delivery (+$2.500)</label>
+                        <label class="radio-card"><input type="radio" name="md-delivery-type" value="delivery" onchange="updateMdCheckoutFields()"> Delivery (+<span class="delivery-cost-display">$2.500</span>)</label>
                     </div>
                 </div>
 
@@ -393,7 +402,7 @@
                     <label>Modalidad de Entrega:</label>
                     <div class="radio-group">
                         <label class="radio-card"><input type="radio" name="delivery-type" value="retiro" checked onchange="updateCartTotal()"> Retiro en Local</label>
-                        <label class="radio-card"><input type="radio" name="delivery-type" value="delivery" onchange="updateCartTotal()"> Delivery (+$2.500)</label>
+                        <label class="radio-card"><input type="radio" name="delivery-type" value="delivery" onchange="updateCartTotal()"> Delivery (+<span class="delivery-cost-display">$2.500</span>)</label>
                     </div>
                 </div>
 
@@ -434,7 +443,7 @@
                     </div>
                     <div class="summary-line" id="delivery-line" style="display: none; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 6px;">
                         <span>Costo de envío</span>
-                        <span>$2.500</span>
+                        <span class="delivery-cost-display">$2.500</span>
                     </div>
                     <div class="summary-line total">
                         <span>Total</span>
@@ -451,7 +460,7 @@
 
     <!-- Footer Copyright -->
     <footer class="site-footer">
-        <p>Creado por Pororó 🍿 - 2026</p>
+        <p>Creado por <a href="https://agenciapororo.github.io/pororo/" target="_blank" class="footer-link">Pororó</a> 🍿 - 2026</p>
     </footer>
 
     <!-- Firebase SDKs -->

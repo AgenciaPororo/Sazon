@@ -8,6 +8,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 let dbProducts = [];
+let deliveryCost = 2500;
 let isStoreOpen = true;
 let isClosingSoon = false;
 let hasUnsavedAdminChanges = false;
@@ -137,6 +138,7 @@ let cart = [];
 document.addEventListener('DOMContentLoaded', () => {
     checkStoreStatus();
     setInterval(checkStoreStatus, 30000); // Revisa horarios cada 30s
+    listenToDeliveryCost();
     listenToMenuDiario();
     renderCategoryPills();
     listenToProducts();
@@ -148,6 +150,41 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+function listenToDeliveryCost() {
+    db.ref("CostoDelivery").on("value", (snapshot) => {
+        const val = snapshot.val();
+        if (val !== null && val !== undefined) {
+            deliveryCost = parseInt(val) || 0;
+        } else {
+            db.ref("CostoDelivery").set(2500);
+            deliveryCost = 2500;
+        }
+        updateDeliveryCostDisplays();
+        updateCartTotal();
+    });
+}
+
+function updateDeliveryCostDisplays() {
+    const formatted = `$${deliveryCost.toLocaleString('es-AR')}`;
+    document.querySelectorAll('.delivery-cost-display').forEach(elem => {
+        elem.innerText = formatted;
+    });
+    const input = document.getElementById('admin-delivery-cost-input');
+    if (input) input.value = deliveryCost;
+}
+
+function saveAdminDeliveryCost() {
+    const inputVal = document.getElementById('admin-delivery-cost-input').value;
+    const newCost = parseInt(inputVal);
+    if (isNaN(newCost) || newCost < 0) {
+        alert('Por favor ingrese un costo válido.');
+        return;
+    }
+    db.ref("CostoDelivery").set(newCost).then(() => {
+        showToast("Costo de delivery actualizado");
+    });
+}
 
 function generateOrderNumber() {
     return Math.floor(1000 + Math.random() * 9000);
@@ -162,10 +199,10 @@ function showToast(message) {
     }, 2500);
 }
 
-// Evaluación precisa de horarios de atención incorporando el cambio de día de la madrugada
+// Evaluación precisa de horarios de atención
 function checkStoreStatus() {
     const now = new Date();
-    const day = now.getDay(); // 0: Dom, 1: Lun, 2: Mar, 3: Mié, 4: Jue, 5: Vie, 6: Sáb
+    const day = now.getDay();
     const hour = now.getHours();
     const min = now.getMinutes();
     const timeInMins = hour * 60 + min;
@@ -173,29 +210,23 @@ function checkStoreStatus() {
     let open = false;
     let closingSoon = false;
 
-    // Evaluamos el turno actual o la extensión del turno nocturno iniciado el día anterior:
-    // Si estamos en la madrugada (00:00 a 03:00), el día de la jornada comercial es el día anterior.
     const effectiveDay = (timeInMins < 180) ? (day === 0 ? 6 : day - 1) : day;
 
     if (effectiveDay >= 1 && effectiveDay <= 5) {
-        // Lunes a Viernes: 10:00 (600m) a 15:00 (900m) y 19:00 (1140m) a 01:00 (60m del día siguiente)
         const isLunch = (timeInMins >= 600 && timeInMins < 900);
         const isDinner = (timeInMins >= 1140) || (timeInMins < 60);
 
         if (isLunch || isDinner) {
             open = true;
-            // Próximo a cerrar (última media hora):
             if ((timeInMins >= 870 && timeInMins < 900) || (timeInMins >= 30 && timeInMins < 60)) {
                 closingSoon = true;
             }
         }
     } else {
-        // Sábados y Domingos: 18:30 (1110m) a 01:30 (90m del día siguiente)
         const isWeekendDinner = (timeInMins >= 1110) || (timeInMins < 90);
 
         if (isWeekendDinner) {
             open = true;
-            // Próximo a cerrar (última media hora):
             if ((timeInMins >= 1080 && timeInMins < 1110) || (timeInMins >= 60 && timeInMins < 90)) {
                 closingSoon = true;
             }
@@ -210,7 +241,6 @@ function checkStoreStatus() {
         topBanner.style.display = isStoreOpen ? 'none' : 'flex';
     }
 
-    // Banners en Menú Diario
     const closingSoonBanner = document.getElementById('closing-soon-banner');
     const closedBanner = document.getElementById('closed-status-banner');
 
@@ -340,6 +370,7 @@ function verifyAdminPass() {
 }
 
 function openAdminSelectorModal() {
+    document.getElementById('admin-delivery-cost-input').value = deliveryCost;
     document.getElementById('admin-menu-selector-modal').classList.add('open');
 }
 
@@ -472,7 +503,7 @@ function sendWhatsAppMenuDiarioOrder() {
     text += `*ORDEN N°:* #SZ-${orderNum}\n`;
     text += `---------------------------------\n`;
     text += `*Cliente:* ${name}\n`;
-    text += `*Modalidad:* ${deliveryType === 'delivery' ? 'Delivery (+$2.500)' : 'Retiro en Local'}\n`;
+    text += `*Modalidad:* ${deliveryType === 'delivery' ? `Delivery (+$${deliveryCost.toLocaleString('es-AR')})` : 'Retiro en Local'}\n`;
     if (deliveryType === 'delivery') text += `*Domicilio:* ${address}\n`;
     text += `*Pago:* ${paymentMethod}\n`;
     if (paymentMethod === 'Efectivo' && cashAmount) text += `*Paga con:* ${cashAmount}\n`;
@@ -910,8 +941,8 @@ function updateCartTotal() {
     const subtotal = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
     const deliveryType = document.querySelector('input[name="delivery-type"]:checked').value;
     const isDelivery = deliveryType === 'delivery';
-    const deliveryCost = isDelivery ? 2500 : 0;
-    const total = subtotal + deliveryCost;
+    const currentDeliveryCost = isDelivery ? deliveryCost : 0;
+    const total = subtotal + currentDeliveryCost;
 
     document.getElementById('cart-subtotal').innerText = `$${subtotal.toLocaleString('es-AR')}`;
     document.getElementById('cart-total').innerText = `$${total.toLocaleString('es-AR')}`;
@@ -960,15 +991,15 @@ function sendWhatsAppOrder() {
     const notes = document.getElementById('client-notes').value.trim();
 
     const subtotal = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
-    const deliveryCost = deliveryType === 'delivery' ? 2500 : 0;
-    const total = subtotal + deliveryCost;
+    const currentDeliveryCost = deliveryType === 'delivery' ? deliveryCost : 0;
+    const total = subtotal + currentDeliveryCost;
     const orderNum = generateOrderNumber();
 
     let text = `*NUEVO PEDIDO - SAZÓN CASERO*\n`;
     text += `*ORDEN N°:* #SZ-${orderNum}\n`;
     text += `---------------------------------\n`;
     text += `*Cliente:* ${name}\n`;
-    text += `*Modalidad:* ${deliveryType === 'delivery' ? 'Delivery (+$2.500)' : 'Retiro en Local'}\n`;
+    text += `*Modalidad:* ${deliveryType === 'delivery' ? `Delivery (+$${deliveryCost.toLocaleString('es-AR')})` : 'Retiro en Local'}\n`;
     if (deliveryType === 'delivery') text += `*Domicilio:* ${address}\n`;
     text += `*Pago:* ${paymentMethod}\n`;
     if (paymentMethod === 'Efectivo' && cashAmount) text += `*Paga con:* ${cashAmount}\n`;
@@ -983,7 +1014,7 @@ function sendWhatsAppOrder() {
     text += `---------------------------------\n`;
     if (deliveryType === 'delivery') {
         text += `*Subtotal:* $${subtotal.toLocaleString('es-AR')}\n`;
-        text += `*Costo de envío:* $2.500\n`;
+        text += `*Costo de envío:* $${deliveryCost.toLocaleString('es-AR')}\n`;
     }
     text += `*TOTAL:* $${total.toLocaleString('es-AR')}\n`;
 
